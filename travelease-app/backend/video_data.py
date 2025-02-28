@@ -62,7 +62,8 @@ def get_video_transcript(video_id: str):
 
 
 def fetch_video_data(video_url: str):
-    """Main function to get video thumbnail and transcript."""
+    """
+    Main function to get video thumbnail and transcript.
     try:
         video_id = extract_video_id(video_url)
         video_details = get_video_details(video_id)
@@ -76,6 +77,9 @@ def fetch_video_data(video_url: str):
         }
     except Exception as e:
         return {"error": str(e)}
+      """
+    # print("fvideo_url}")
+    print(f'got the link {video_url}')
 
 
 def get_transcript_summary(video_id: str):
