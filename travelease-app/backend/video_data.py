@@ -12,7 +12,7 @@ load_dotenv()
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 SUPADATA_API_KEY = os.getenv("SUPADATA_API_KEY")
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")  # Set OpenAI API key
-
+print(os.environ)
 client = OpenAI()
 
 if not YOUTUBE_API_KEY or not SUPADATA_API_KEY:
@@ -77,11 +77,12 @@ def fetch_video_data(video_url: str):
     except Exception as e:
         return {"error": str(e)}
 
+
 def get_transcript_summary(video_id: str):
     "summarizes the raw transcript into neat bullets"
-    
-    #For now commented out so we avoid repeated API calls, eventualy remove file stuff
-    #transcript = get_video_transcript(video_id)
+
+    # For now commented out so we avoid repeated API calls, eventualy remove file stuff
+    # transcript = get_video_transcript(video_id)
 
     with open("output.txt", "r", encoding="utf-8") as file:
         transcript = file.read()
@@ -89,20 +90,19 @@ def get_transcript_summary(video_id: str):
     if transcript == "Transcript not available":
         return "Summary not available (Transcript missing)."
 
-
     response = client.chat.completions.create(
         model="gpt-4-turbo",  # or "gpt-4"
         messages=[
             {"role": "system", "content": "You are an expert at summarizing YouTube transcripts and returns structured JSON."},
-            {"role": "user", "content": f"Summarize the following transcript and return a JSON object with 'title', 'summary', and 'keywords' fields:\n\n{transcript}"}
+            {"role": "user", "content": f"Organize this transcript into sections: getting to NYC, commuting within NYC, TOURIST ATTRACTIONS in NYC, safety tips, food and dining recommendations, brodways and shows, saving money, weather, and miscellaneous tips. Striclty only include the information provided in the video. If the video does not talk aout a certain category, do not include it. Do not use any source outside this transcript for context:\n\n{transcript}"}
         ],
         response_format={"type": "json_object"}
     )
 
     return response.choices[0].message.content
 
+
 # Example usage
 video_url = "https://www.youtube.com/watch?v=sqc1v30C6TA"
 video_data = fetch_video_data(video_url)
 print(video_data)
-
