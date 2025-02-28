@@ -3,6 +3,7 @@ import re
 import requests
 from supadata import Supadata, SupadataError
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables from .env
 load_dotenv()
@@ -10,6 +11,9 @@ load_dotenv()
 # Access API keys
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 SUPADATA_API_KEY = os.getenv("SUPADATA_API_KEY")
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")  # Set OpenAI API key
+
+client = OpenAI()
 
 if not YOUTUBE_API_KEY or not SUPADATA_API_KEY:
     raise ValueError("API keys are missing! Check your .env file.")
@@ -62,19 +66,43 @@ def fetch_video_data(video_url: str):
     try:
         video_id = extract_video_id(video_url)
         video_details = get_video_details(video_id)
-        transcript = get_video_transcript(video_id)
+        summary = get_transcript_summary(video_id)
 
         return {
             "video_id": video_id,
             "title": video_details["title"],
             "thumbnail": video_details["thumbnail"],
-            "transcript": transcript
+            "summary": summary
         }
     except Exception as e:
         return {"error": str(e)}
 
+def get_transcript_summary(video_id: str):
+    "summarizes the raw transcript into neat bullets"
+    
+    #For now commented out so we avoid repeated API calls, eventualy remove file stuff
+    #transcript = get_video_transcript(video_id)
+
+    with open("output.txt", "r", encoding="utf-8") as file:
+        transcript = file.read()
+
+    if transcript == "Transcript not available":
+        return "Summary not available (Transcript missing)."
+
+
+    response = client.chat.completions.create(
+        model="gpt-4-turbo",  # or "gpt-4"
+        messages=[
+            {"role": "system", "content": "You are an expert at summarizing YouTube transcripts and returns structured JSON."},
+            {"role": "user", "content": f"Summarize the following transcript and return a JSON object with 'title', 'summary', and 'keywords' fields:\n\n{transcript}"}
+        ],
+        response_format={"type": "json_object"}
+    )
+
+    return response.choices[0].message.content
 
 # Example usage
 video_url = "https://www.youtube.com/watch?v=sqc1v30C6TA"
 video_data = fetch_video_data(video_url)
 print(video_data)
+
