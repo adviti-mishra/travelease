@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import PastSummaries from './pastsummaries';
 import './style.css';
-import './pastsummaries.tsx'
 
-function App() {
-
+function FirstPage() {
+  const navigate = useNavigate();
   const [link, setLink] = useState<string>('');
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     alert(`Link Submitted: ${link}`);
-
-
+    
     try {
       const response = await fetch("http://127.0.0.1:5000/process", {
         method: "POST",
@@ -19,7 +19,7 @@ function App() {
         },
         body: JSON.stringify({ link }), // Send the link to the backend
       });
-
+      
       const data = await response.text(); // Read response as text
       alert(`Response from server: ${data}`);
     } catch (error) {
@@ -27,12 +27,12 @@ function App() {
       alert("Failed to send link.");
     }
   };
-
+  
   return (
     <div className="container">
       <div className="header">
         <div className="profile-section">
-          <img src="/api/placeholder/60/60" alt="Profile" className="profile-image" />
+          <img src="/" alt="Profile" className="profile-image" />
         </div>
         <div className="logo-section">
           <h1 className="logo-text">TravelEase</h1>
@@ -40,12 +40,14 @@ function App() {
           <h2 className="tagline">Summarize Link</h2>
         </div>
         <div className="history-section">
-          <button className="history-button">
+          <button
+            className="history-button"
+            onClick={() => navigate('/past-summaries')}
+          >
             History <span className="arrow">›</span>
           </button>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="link-form">
         <input
           type="text"
@@ -60,6 +62,17 @@ function App() {
       </form>
     </div>
   );
-};
+}
 
-export default App;
+function MainApp() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<FirstPage />} />
+        <Route path="/past-summaries" element={<PastSummaries />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default MainApp;

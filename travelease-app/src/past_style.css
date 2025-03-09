@@ -1,0 +1,157 @@
+/* Base styles for the entire page */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+.past-container {
+  background: linear-gradient(to bottom, black, #006400);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+/* Header styles */
+.past-header {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 60px;
+}
+
+.profile-circle {
+  flex: 1;
+}
+
+.profile-circle img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.past-title-container {
+  flex: 2;
+  text-align: center;
+}
+
+.past-title {
+  color: #5eb656;
+  font-size: 42px;
+  margin: 0;
+  font-weight: normal;
+}
+
+.past-divider {
+  height: 1px;
+  background-color: #5eb656;
+  margin: 5px auto;
+  width: 80%;
+}
+
+.past-subtitle {
+  color: #a5a5a5;
+  font-size: 22px;
+  margin: 5px 0 0 0;
+  font-weight: normal;
+}
+
+.insert-link-button {
+  background-color: #e5e5e5;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #333;
+}
+
+/* Summary cards */
+.summaries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.summary-card {
+  display: flex;
+  background-color: rgba(229, 229, 229, 0.9);
+  border-radius: 10px;
+  overflow: hidden;
+  color: #333;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.summary-image-container {
+  position: relative;
+  width: 150px;
+  min-width: 150px;
+  height: 150px;
+  overflow: hidden;
+}
+
+.summary-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  text-align: center;
+}
+
+.image-title {
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.summary-content {
+  padding: 15px;
+  flex-grow: 1;
+}
+
+.summary-description {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Make the page responsive */
+@media (max-width: 768px) {
+  .past-header {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .summaries-list {
+    padding: 0;
+  }
+  
+  .summary-card {
+    flex-direction: column;
+  }
+  
+  .summary-image-container {
+    width: 100%;
+    height: 180px;
+  }
+  
+  .past-divider {
+    width: 80%;
+  }
+}

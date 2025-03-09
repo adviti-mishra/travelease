@@ -1,0 +1,32 @@
+{
+    "summaries": [
+      {
+        "id": 1,
+        "title": "First Time in NYC?",
+        "displayTitle": "FIRST TIME IN NYC? DO THIS!",
+        "description": "The video highlights 12 must-do experiences for first-time visitors to New York City, covering iconic sights, food, and cultural spots. A trip to NYC wouldn't be complete without grabbing a slice of pizza, as the city is famous for its diverse and delicious options. For breathtaking views of the skyline, visitors should head to a rooftop observatory like Top of the Rock or One World Observatory.",
+        "imageUrl": "https://pic.jpg"
+      },
+      {
+        "id": 2,
+        "title": "Best of NYC",
+        "displayTitle": "BEST of NYC",
+        "description": "The excitement of being in New York is unmatched, as the city represents an American icon, known for its Broadway shows, stunning architecture, legendary nightlife, and diverse food scene. Over the next few days, the trip will highlight the best places to eat and explore, offering a first-time visitor's guide to experiencing the best of NYC.",
+        "imageUrl": "https://pic.jpg"
+      },
+      {
+        "id": 3,
+        "title": "New York in 4 Days",
+        "displayTitle": "NEW YORK IN 4 DAYS",
+        "description": "The best time to visit New York City is during April-June and September-November, offering pleasant weather and a variety of events. Major airports like John F. Kennedy (JFK) and Newark Liberty (EWR) are well-connected to Manhattan, with affordable transportation options via AirTrain, subway, or NJ Transit.",
+        "imageUrl": "https://pic.jpg"
+      },
+      {
+        "id": 4,
+        "title": "Random Title",
+        "displayTitle": "FIRST TIME IN NYC? DO THIS!",
+        "description": "The video highlights 12 must-do experiences for first-time visitors to New York City, covering iconic sights, food, and cultural spots. A trip to NYC wouldn't be complete without grabbing a slice of pizza, as the city is famous for its diverse and delicious options. For breathtaking views of the skyline, visitors should head to a rooftop observatory like Top of the Rock or One World Observatory.",
+        "imageUrl": "https://pic.jpg"
+      }
+    ]
+  }
