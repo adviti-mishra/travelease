@@ -8,13 +8,14 @@ import {
 } from "react-router-dom";
 import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
 import PastSummaries from "./pastsummaries";
+import { useAuth } from "./AuthContext";
 import { jwtDecode } from "jwt-decode";
 import "./style.css";
 
 function FirstPage() {
   const navigate = useNavigate();
   const [link, setLink] = useState<string>("");
-  const [user, setUser] = useState<any>(null);
+  const { user, setUser } = useAuth();
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -36,6 +37,14 @@ function FirstPage() {
       console.log("Login Failed");
     },
   });
+
+  const handleHistoryClick = () => {
+    if (!user) {
+      login(); // 🚀 Automatically trigger Google OAuth login
+    } else {
+      navigate("/past-summaries"); // ✅ If logged in, navigate to history
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,10 +127,7 @@ function FirstPage() {
           <h2 className="tagline">Summarize Link</h2>
         </div>
         <div className="history-section">
-          <button
-            className="history-button"
-            onClick={() => navigate("/past-summaries")}
-          >
+          <button className="history-button" onClick={handleHistoryClick}>
             History <span className="arrow">›</span>
           </button>
         </div>

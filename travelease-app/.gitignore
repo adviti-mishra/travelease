@@ -23,3 +23,16 @@ yarn-debug.log*
 yarn-error.log*
 
 backend/.env
+
+# Ignore system files
+.DS_Store
+
+# Ignore dependencies
+node_modules/
+
+# Ignore Yarn & npm logs
+yarn-error.log
+npm-debug.log
+
+# Ignore environment variables (if using .env)
+.env
