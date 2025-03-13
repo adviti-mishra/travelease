@@ -1,66 +1,72 @@
 import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate,
-} from "react-router-dom";
-import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
+import { supabase } from "./supabaseClient";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import PastSummaries from "./pastsummaries";
+import "./style.css";
 import { useAuth } from "./AuthContext";
 import { jwtDecode } from "jwt-decode";
-import "./style.css";
+import { AuthProvider } from "./AuthContext";
 
 function FirstPage() {
   const navigate = useNavigate();
   const [link, setLink] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [summaryData, setSummaryData] = useState<{ summary?: any; error?: string } | null>(null);
-  const { user, setUser } = useAuth();
+  // const { user, setUser } = useAuth();
+  const [user, setUser] = useState<any>(null); // Store authenticated user
 
-  // Debug effect to check user state
   useEffect(() => {
-    console.log("Current user state:", user);
-  }, [user]);
+    // Check if user is already logged in
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    getUser();
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const userInfoResponse = await fetch(
-          "https://www.googleapis.com/oauth2/v2/userinfo",
-          {
-            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-          }
-        );
-        const userInfo = await userInfoResponse.json();
-        console.log("Fetched user info:", userInfo);
-        setUser(userInfo);
-      } catch (error) {
-        console.error("Failed to fetch user info:", error);
-      }
-    },
-    onError: (error) => {
-      console.log("Login Failed", error);
-    },
-  });
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
+
+    if (error) {
+      console.error("Google Sign-In Failed:", error.message);
+    } else {
+      console.log("Google Sign-In Success:", data);
+    }
+  };
 
   const handleHistoryClick = () => {
     if (!user) {
-      login(); // 🚀 Automatically trigger Google OAuth login
+      handleGoogleLogin();
     } else {
-      navigate("/past-summaries"); // ✅ If logged in, navigate to history
+      navigate("/past-summaries");
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!user) {
-      login();
+      handleGoogleLogin();
       return;
     }
+    alert(`Link Submitted: ${link}`);
 
-    // Prevent multiple submissions
+
     if (isLoading) {
       return;
     }
@@ -151,49 +157,32 @@ function FirstPage() {
     <div className="container">
       <div className="header">
         <div className="profile-section">
-          {user && user.picture && (
-            <img 
-              src={user.picture} 
-              alt="Profile" 
-              className="profile-image" 
-              onError={(e) => {
-                console.log("Failed to load profile image");
-                // Set a fallback image or hide
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          )}
+        {user && user.user_metadata?.avatar_url ? (
+            <img src={user.user_metadata.avatar_url} alt="Profile" className="profile-image" />
+          ) : null}
         </div>
 
+        
+
+        <div className="auth-section">
+        {user ? (
+          <div className="google-login-container">
+            <button className="logout-button" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        ) : (
+          <div className="google-login-container">
+            <button className="login-button" onClick={handleGoogleLogin}>
+              Sign in with Google
+            </button>
+          </div>
+        )}
+        </div>
         <div className="logo-section">
           <h1 className="logo-text">TravelEase</h1>
           <div className="divider"></div>
           <h2 className="tagline">Summarize Link</h2>
-        </div>
-
-        <div className="auth-section">
-          {user ? (
-            <button className="logout-button" onClick={() => setUser(null)}>
-              Logout
-            </button>
-          ) : (
-            <div className="google-login-container">
-              <GoogleLogin
-                onSuccess={(credentialResponse) => {
-                  if (credentialResponse.credential) {
-                    const decoded: any = jwtDecode(credentialResponse.credential);
-                    console.log("Decoded JWT:", decoded);
-                    setUser({
-                      name: decoded.name,
-                      picture: decoded.picture,
-                      email: decoded.email
-                    });
-                  }
-                }}
-                onError={() => console.log("Login Failed")}
-              />
-            </div>
-          )}
         </div>
 
         <div className="history-section">
