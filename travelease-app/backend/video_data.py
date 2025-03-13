@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 # Load environment variables from .env
-load_dotenv()
+load_dotenv(override=True)
 
 # Access API keys
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
