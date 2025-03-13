@@ -13,7 +13,6 @@ load_dotenv(override=True)
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 SUPADATA_API_KEY = os.getenv("SUPADATA_API_KEY")
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")  # Set OpenAI API key
-print(os.getenv("OPENAI_API_KEY"))
 
 client = OpenAI()
 
@@ -126,4 +125,4 @@ video_url = "https://www.youtube.com/watch?v=sqc1v30C6TA"
 video_data = fetch_video_data(video_url)
 print(video_data)
 
-# print(OPENAI_KEY)
+
