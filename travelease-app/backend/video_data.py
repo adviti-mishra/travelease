@@ -1,12 +1,13 @@
 import os
 import re
 import requests
+import json
 from supadata import Supadata, SupadataError
 from dotenv import load_dotenv
 from openai import OpenAI
 
 # Load environment variables from .env
-load_dotenv()
+load_dotenv(override=True)
 
 # Access API keys
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
@@ -115,8 +116,8 @@ def get_transcript_summary(video_id: str):
         ],
         response_format={"type": "json_object"}
     )
-
-    return response.choices[0].message.content
+    structured_json = json.loads(response.choices[0].message.content)
+    return structured_json
 
 
 # Example usage
