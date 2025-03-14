@@ -5,6 +5,8 @@ import json
 from supadata import Supadata, SupadataError
 from dotenv import load_dotenv
 from openai import OpenAI
+from flask import jsonify
+
 
 # Load environment variables from .env
 load_dotenv(override=True)
@@ -63,27 +65,27 @@ def get_video_transcript(video_id: str):
 
 
 def fetch_video_data(video_url: str):
-    """
-    Main function to get video thumbnail and transcript.
-    return {
-            "video_id": video_id,
-            "title": video_details["title"],
-            "thumbnail": video_details["thumbnail"],
-            "summary": summary
-        }
-    """
     try:
         video_id = extract_video_id(video_url)
         video_details = get_video_details(video_id)
-        summary = get_transcript_summary(video_id)
+        summary = get_transcript_summary(video_id)  # Returns structured JSON
 
-        return {"summary": summary}
+        if not isinstance(summary, dict):
+            return {"error": "Invalid summary format."}
+
+        # Format summary for frontend display
+        formatted_summary = {
+            section: {
+                "Description": f"Recommendations for {section.lower()}.",
+                "Details": details
+            }
+            for section, details in summary.items()
+        }
+
+        return formatted_summary  # Return as dictionary instead of list
 
     except Exception as e:
-        return {"error": str(e)}
-
-    # print("fvideo_url}")
-    # print(f'got the link {video_url}')
+        return {"error": f"An error occurred: {str(e)}"}
 
 
 def get_transcript_summary(video_id: str):
@@ -116,6 +118,7 @@ def get_transcript_summary(video_id: str):
         response_format={"type": "json_object"}
     )
     structured_json = json.loads(response.choices[0].message.content)
+    
     return structured_json
 
 

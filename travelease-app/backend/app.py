@@ -4,6 +4,7 @@ from video_data import fetch_video_data
 import os
 import jwt 
 from supabase import create_client
+import json
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
@@ -70,11 +71,29 @@ def process():
 
     if not video_link:
         return jsonify({"error": "No link provided"}), 400
+    
+    user_id = get_user_id()  # Extract user ID from the request
+    if not user_id:
+        return jsonify({"error": "Unauthorized. Please log in."}), 401
 
-    # Process the video link (assuming process_video function returns a JSON object)
-    fetch_video_data(video_link)
+    result = fetch_video_data(video_link)
 
-    return "^ success?"  # Send JSON back to frontend
+    # Ensure result is correctly formatted as an object
+    if not result or not isinstance(result, list) or not result[0]:
+        return jsonify({"error": "Failed to generate summary"}), 500
+
+    formatted_result = {"summary": result[0]}  # Wrap in an object with "summary" key
+
+    # Insert summary into the Supabase database
+    try:
+        response = supabase_client.table("summaries").insert({
+            "user_id": user_id,
+            "content": json.dumps(result)  # Convert dictionary to JSON string for storage
+        }).execute()
+
+    except Exception as db_error:
+        return jsonify({"error": f"Database insert failed: {str(db_error)}"}), 500
+    return jsonify(formatted_result)  # Send JSON back to frontend
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
