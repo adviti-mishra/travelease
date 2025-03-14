@@ -115,7 +115,7 @@
 
 .history-button {
   transition: background-color 0.3s;
-  background-color: #4D869C;
+  background-color: transparent;
   border: 2px solid #fff;
   color: #fff;
   border-radius: 30px;
