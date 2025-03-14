@@ -121,7 +121,12 @@ function FirstPage() {
 
   return (
     <div className="container">
-      <div className="background-image"></div>
+      <video autoPlay loop muted playsInline className="back-video">
+        <source
+          src="./videos/video3.mp4"
+          type="video/mp4"
+        />
+      </video>
 
       <div className="header">
         <div className="profile-section">

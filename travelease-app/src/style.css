@@ -7,10 +7,10 @@
   padding: 40px 20px;
   font-family: Arial, sans-serif;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
-.background-image {
+.back-video {
   position: fixed;
   /* Make sure the video fills the background */
   top: 0;
@@ -18,9 +18,9 @@
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  background-image: url("../public/background.jpg");
   /* Ensures the video covers the entire screen */
   z-index: -1;
+  /* Keep it behind all content */
 }
 
 .website-title {
@@ -30,7 +30,7 @@
 .website-title h1 {
   margin-top: -40px;
   font-size: 40px;
-  color: #2E5077;
+  color: #C9E6F0;
   font-weight: 150;
 }
 
@@ -40,7 +40,7 @@
 
 .logo-section h1 {
   font-size: 160px;
-  color: #3A6D8C;
+  color: #C9E6F0;
   font-weight: 600;
 }
 
