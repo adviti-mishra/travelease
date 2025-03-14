@@ -21,9 +21,7 @@ const PastSummaries: React.FC = () => {
 
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from("summaries")
-        .select("*"); // Fetch all summaries (temporary)
+      const { data, error } = await supabase.from("summaries").select("*"); // Fetch all summaries (temporary)
 
       if (error) {
         console.error("Error fetching summaries:", error);
@@ -44,7 +42,7 @@ const PastSummaries: React.FC = () => {
       // Handle different types of content
       let summaryObj;
 
-      if (typeof summaryContent === 'string') {
+      if (typeof summaryContent === "string") {
         try {
           summaryObj = JSON.parse(summaryContent);
         } catch (e) {
@@ -54,18 +52,20 @@ const PastSummaries: React.FC = () => {
         summaryObj = summaryContent;
       }
 
-      if (!summaryObj || typeof summaryObj !== 'object') {
+      if (!summaryObj || typeof summaryObj !== "object") {
         return <pre>{String(summaryContent)}</pre>;
       }
 
       return (
         <div className="summary-sections">
-          {Object.entries(summaryObj).map(([section, content]: [string, any]) => (
-            <div key={section} className="summary-section">
-              <h3>{formatSectionTitle(section)}</h3>
-              {renderSectionContent(content)}
-            </div>
-          ))}
+          {Object.entries(summaryObj).map(
+            ([section, content]: [string, any]) => (
+              <div key={section} className="summary-section">
+                <h3>{formatSectionTitle(section)}</h3>
+                {renderSectionContent(content)}
+              </div>
+            )
+          )}
         </div>
       );
     } catch (error) {
@@ -78,7 +78,7 @@ const PastSummaries: React.FC = () => {
       return null;
     }
 
-    if (typeof content === 'string') {
+    if (typeof content === "string") {
       return <p>{content}</p>;
     }
 
@@ -87,7 +87,7 @@ const PastSummaries: React.FC = () => {
         <ul>
           {content.map((item: any, index: number) => (
             <li key={index}>
-              {typeof item === 'object' && item !== null
+              {typeof item === "object" && item !== null
                 ? renderObjectItem(item)
                 : item}
             </li>
@@ -96,7 +96,11 @@ const PastSummaries: React.FC = () => {
       );
     }
 
-    if (typeof content === 'object' && content.information && Array.isArray(content.information)) {
+    if (
+      typeof content === "object" &&
+      content.information &&
+      Array.isArray(content.information)
+    ) {
       return (
         <ul>
           {content.information.map((item: string, index: number) => (
@@ -106,7 +110,7 @@ const PastSummaries: React.FC = () => {
       );
     }
 
-    if (typeof content === 'object') {
+    if (typeof content === "object") {
       return (
         <div className="nested-content">
           {Object.entries(content).map(([key, value]: [string, any], index) => (
@@ -128,14 +132,27 @@ const PastSummaries: React.FC = () => {
         <div>
           <strong>{item.name}</strong>
           {item.description && <p>{item.description}</p>}
-          {item.recommendation && <p><em>Recommendation: </em>{item.recommendation}</p>}
-          {item.note && <p><em>Note: </em>{item.note}</p>}
+          {item.recommendation && (
+            <p>
+              <em>Recommendation: </em>
+              {item.recommendation}
+            </p>
+          )}
+          {item.note && (
+            <p>
+              <em>Note: </em>
+              {item.note}
+            </p>
+          )}
           {Object.entries(item)
-            .filter(([key]) => !['name', 'description', 'recommendation', 'note'].includes(key))
+            .filter(
+              ([key]) =>
+                !["name", "description", "recommendation", "note"].includes(key)
+            )
             .map(([key, value]) => (
               <div key={key} className="sub-item">
                 <strong>{formatSectionTitle(key)}: </strong>
-                {typeof value === 'object'
+                {typeof value === "object"
                   ? renderSectionContent(value)
                   : String(value)}
               </div>
@@ -149,7 +166,7 @@ const PastSummaries: React.FC = () => {
         {Object.entries(item).map(([key, value]) => (
           <div key={key} className="sub-item">
             <strong>{formatSectionTitle(key)}: </strong>
-            {typeof value === 'object'
+            {typeof value === "object"
               ? renderSectionContent(value)
               : String(value)}
           </div>
@@ -160,9 +177,9 @@ const PastSummaries: React.FC = () => {
 
   const formatSectionTitle = (title: string): string => {
     return title
-      .split('_')
+      .split("_")
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .join(" ");
   };
 
   if (!user) {
@@ -205,14 +222,16 @@ const PastSummaries: React.FC = () => {
       </div>
 
       {loading ? (
-        <p>Loading summaries...</p>
+        <h2 className="loading-summaries">Loading summaries...</h2>
       ) : summaries.length === 0 ? (
-        <p>No past summaries found.</p>
+        <h2 className="no-summaries">No past summaries found.</h2>
       ) : (
         <div className="summaries-list">
           {summaries.map((summary) => (
             <div key={summary.id} className="summary-card">
-              <p className="summary-content">{renderSummaryContent(summary.content)}</p>
+              <p className="summary-content">
+                {renderSummaryContent(summary.content)}
+              </p>
             </div>
           ))}
         </div>

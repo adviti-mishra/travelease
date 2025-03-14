@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 import PastSummaries from "./pastsummaries";
 import "./style.css";
 import { useAuth } from "./AuthContext";
@@ -11,7 +16,10 @@ function FirstPage() {
   const navigate = useNavigate();
   const [link, setLink] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [summaryData, setSummaryData] = useState<{ summary?: any; error?: string } | null>(null);
+  const [summaryData, setSummaryData] = useState<{
+    summary?: any;
+    error?: string;
+  } | null>(null);
   // const { user, setUser } = useAuth();
   const [user, setUser] = useState<any>(null); // Store authenticated user
 
@@ -24,9 +32,11 @@ function FirstPage() {
     getUser();
 
     // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
 
     return () => {
       authListener?.subscription.unsubscribe();
@@ -68,8 +78,6 @@ function FirstPage() {
     // Get the Supabase JWT token
     const { data } = await supabase.auth.getSession();
     const token = data?.session?.access_token;
-
-
     if (!token) {
       console.error("No access token available.");
       return;
@@ -85,9 +93,9 @@ function FirstPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // ✅ Send token in headers
+          Authorization: `Bearer ${token}`, // ✅ Send token in headers
         },
-        body: JSON.stringify({ link })
+        body: JSON.stringify({ link }),
       });
 
       console.log("Response status:", response.status);
@@ -95,7 +103,9 @@ function FirstPage() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Server error (${response.status}): ${errorText}`);
-        throw new Error(`Server responded with status: ${response.status}. Details: ${errorText}`);
+        throw new Error(
+          `Server responded with status: ${response.status}. Details: ${errorText}`
+        );
       }
 
       const data = await response.json();
@@ -109,18 +119,20 @@ function FirstPage() {
     }
   };
 
-
-
   return (
     <div className="container">
+      <div className="background-image"></div>
+
       <div className="header">
         <div className="profile-section">
           {user && user.user_metadata?.avatar_url ? (
-            <img src={user.user_metadata.avatar_url} alt="Profile" className="profile-image" />
+            <img
+              src={user.user_metadata.avatar_url}
+              alt="Profile"
+              className="profile-image"
+            />
           ) : null}
         </div>
-
-
 
         <div className="auth-section">
           {user ? (
@@ -137,11 +149,6 @@ function FirstPage() {
             </div>
           )}
         </div>
-        <div className="logo-section">
-          <h1 className="logo-text">TravelEase</h1>
-          <div className="divider"></div>
-          <h2 className="tagline">Summarize Link</h2>
-        </div>
 
         <div className="history-section">
           <button className="history-button" onClick={handleHistoryClick}>
@@ -150,39 +157,46 @@ function FirstPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="link-form">
-        <input
-          type="text"
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          placeholder="Enter YouTube link..."
-          className="link-input"
-          disabled={isLoading}
-        />
-        <button type="submit" className="submit-button" disabled={isLoading || !link}>
-          {isLoading ? (
-            <span className="loading-spinner"></span>
-          ) : (
-            "Submit"
-          )}
-        </button>
-      </form>
+      <div className="website-title">
+        <h1>TravelEase</h1>
+      </div>
+
+      <div className="logo-section">
+        <div className="divider"></div>
+        <h1 className="logo-text">New York</h1>
+      </div>
+
+      <div className="form">
+        <form onSubmit={handleSubmit} className="link-form">
+          <input
+            type="text"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="Enter YouTube link..."
+            className="link-input"
+            disabled={isLoading}
+          />
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isLoading || !link}
+          >
+            {isLoading ? <span className="loading-spinner"></span> : "Submit"}
+          </button>
+        </form>
+      </div>
 
       {summaryData && (
         <div className="summary-container">
           <h2 className="summary-title">Travel Summary</h2>
           {summaryData.error ? (
-            <div className="summary-error">
-              Error: {summaryData.error}
-            </div>
+            <div className="summary-error">Error: {summaryData.error}</div>
           ) : summaryData.summary ? (
             <div className="summary-content">
               {renderSummaryContent(summaryData.summary)}
             </div>
           ) : (
-            <div className="summary-loading">
-              Processing summary...
-            </div>
+            <div className="summary-loading">Processing summary...</div>
           )}
         </div>
       )}
@@ -198,7 +212,7 @@ function renderSummaryContent(summaryContent: any): React.ReactNode {
     // Handle different types of content
     let summaryObj;
 
-    if (typeof summaryContent === 'string') {
+    if (typeof summaryContent === "string") {
       // If it's a string, try to parse it as JSON
       try {
         summaryObj = JSON.parse(summaryContent);
@@ -214,7 +228,7 @@ function renderSummaryContent(summaryContent: any): React.ReactNode {
     }
 
     // Ensure we have an object to work with
-    if (!summaryObj || typeof summaryObj !== 'object') {
+    if (!summaryObj || typeof summaryObj !== "object") {
       console.error("Summary is not a valid object:", summaryObj);
       return <pre>{String(summaryContent)}</pre>;
     }
@@ -243,7 +257,7 @@ function renderSectionContent(content: any): React.ReactNode {
   }
 
   // For string content
-  if (typeof content === 'string') {
+  if (typeof content === "string") {
     return <p>{content}</p>;
   }
 
@@ -253,7 +267,7 @@ function renderSectionContent(content: any): React.ReactNode {
       <ul>
         {content.map((item: any, index: number) => (
           <li key={index}>
-            {typeof item === 'object' && item !== null
+            {typeof item === "object" && item !== null
               ? renderObjectItem(item)
               : item}
           </li>
@@ -263,7 +277,11 @@ function renderSectionContent(content: any): React.ReactNode {
   }
 
   // For object content with 'information' property
-  if (typeof content === 'object' && content.information && Array.isArray(content.information)) {
+  if (
+    typeof content === "object" &&
+    content.information &&
+    Array.isArray(content.information)
+  ) {
     return (
       <ul>
         {content.information.map((item: string, index: number) => (
@@ -274,7 +292,7 @@ function renderSectionContent(content: any): React.ReactNode {
   }
 
   // For general object content
-  if (typeof content === 'object') {
+  if (typeof content === "object") {
     return (
       <div className="nested-content">
         {Object.entries(content).map(([key, value]: [string, any], index) => (
@@ -298,14 +316,27 @@ function renderObjectItem(item: any): React.ReactNode {
       <div>
         <strong>{item.name}</strong>
         {item.description && <p>{item.description}</p>}
-        {item.recommendation && <p><em>Recommendation: </em>{item.recommendation}</p>}
-        {item.note && <p><em>Note: </em>{item.note}</p>}
+        {item.recommendation && (
+          <p>
+            <em>Recommendation: </em>
+            {item.recommendation}
+          </p>
+        )}
+        {item.note && (
+          <p>
+            <em>Note: </em>
+            {item.note}
+          </p>
+        )}
         {Object.entries(item)
-          .filter(([key]) => !['name', 'description', 'recommendation', 'note'].includes(key))
+          .filter(
+            ([key]) =>
+              !["name", "description", "recommendation", "note"].includes(key)
+          )
           .map(([key, value]) => (
             <div key={key} className="sub-item">
               <strong>{formatSectionTitle(key)}: </strong>
-              {typeof value === 'object'
+              {typeof value === "object"
                 ? renderSectionContent(value)
                 : String(value)}
             </div>
@@ -319,7 +350,7 @@ function renderObjectItem(item: any): React.ReactNode {
       {Object.entries(item).map(([key, value]) => (
         <div key={key} className="sub-item">
           <strong>{formatSectionTitle(key)}: </strong>
-          {typeof value === 'object'
+          {typeof value === "object"
             ? renderSectionContent(value)
             : String(value)}
         </div>
@@ -331,9 +362,9 @@ function renderObjectItem(item: any): React.ReactNode {
 // Helper function to format section titles
 function formatSectionTitle(title: string): string {
   return title
-    .split('_')
+    .split("_")
     .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 function MainApp() {
