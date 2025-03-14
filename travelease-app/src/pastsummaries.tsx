@@ -192,6 +192,17 @@ const PastSummaries: React.FC = () => {
 
   return (
     <div className="past-container">
+      {/* Video Background */}
+      <div className="video-background">
+        <video autoPlay loop muted>
+          <source
+            src="https://path-to-your-video.mp4"
+            type="video/mp4"
+          />
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
       <div className="past-header">
         <div className="profile-circle">
           {user.user_metadata?.avatar_url ? (
