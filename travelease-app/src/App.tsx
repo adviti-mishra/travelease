@@ -110,7 +110,7 @@ function FirstPage() {
 
       const data = await response.json();
       console.log("Parsed response data:", data);
-      setSummaryData(data);
+      setSummaryData(data.summary);
     } catch (error) {
       console.error("Error details:", error);
       setSummaryData({ error: `Failed to send link: ${error.message}` });
@@ -196,18 +196,18 @@ function FirstPage() {
           <h2 className="summary-title">Travel Summary</h2>
           {summaryData.error ? (
             <div className="summary-error">Error: {summaryData.error}</div>
-          ) : summaryData.summary ? (
-            <div className="summary-content">
-              {renderSummaryContent(summaryData.summary)}
-            </div>
           ) : (
-            <div className="summary-loading">Processing summary...</div>
+            <div className="summary-content">
+              {renderSummaryContent(summaryData)} {/* Pass the whole summaryData here */}
+            </div>
           )}
         </div>
       )}
+
     </div>
   );
 }
+
 
 // Function to render the JSON summary in a structured way
 function renderSummaryContent(summaryContent: any): React.ReactNode {
@@ -217,7 +217,7 @@ function renderSummaryContent(summaryContent: any): React.ReactNode {
     // Handle different types of content
     let summaryObj;
 
-    if (typeof summaryContent === "string") {
+    if (typeof summaryContent === 'string') {
       // If it's a string, try to parse it as JSON
       try {
         summaryObj = JSON.parse(summaryContent);
@@ -233,7 +233,7 @@ function renderSummaryContent(summaryContent: any): React.ReactNode {
     }
 
     // Ensure we have an object to work with
-    if (!summaryObj || typeof summaryObj !== "object") {
+    if (!summaryObj || typeof summaryObj !== 'object') {
       console.error("Summary is not a valid object:", summaryObj);
       return <pre>{String(summaryContent)}</pre>;
     }
@@ -253,6 +253,7 @@ function renderSummaryContent(summaryContent: any): React.ReactNode {
     return <pre>{JSON.stringify(summaryContent, null, 2)}</pre>;
   }
 }
+
 
 // Helper function to render different types of section content
 function renderSectionContent(content: any): React.ReactNode {
