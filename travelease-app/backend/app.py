@@ -66,34 +66,41 @@ def get_summaries():
     
 @app.route('/process', methods=['POST'])
 def process():
-    data = request.json  # Get JSON data from frontend
+    data = request.json  
     video_link = data.get('link')
+    print("Received link:", video_link)
 
     if not video_link:
+        print("Error: No link provided")
         return jsonify({"error": "No link provided"}), 400
     
-    user_id = get_user_id()  # Extract user ID from the request
+    user_id = get_user_id()  
+    print("Extracted user ID:", user_id)
+    
     if not user_id:
+        print("Error: Unauthorized access")
         return jsonify({"error": "Unauthorized. Please log in."}), 401
 
     result = fetch_video_data(video_link)
+    print("Fetched video data:", result)
 
-    # Ensure result is correctly formatted as an object
-    if not result or not isinstance(result, list) or not result[0]:
+    if not result or "summary" not in result or not isinstance(result["summary"], dict):
+        print("Error: fetch_video_data returned an invalid response format")
         return jsonify({"error": "Failed to generate summary"}), 500
 
-    formatted_result = {"summary": result[0]}  # Wrap in an object with "summary" key
+    formatted_result = {"summary": result["summary"]}  # Ensure correct structure
 
-    # Insert summary into the Supabase database
     try:
         response = supabase_client.table("summaries").insert({
             "user_id": user_id,
-            "content": json.dumps(result)  # Convert dictionary to JSON string for storage
+            "content": json.dumps(result["summary"])  # Store the summary dictionary
         }).execute()
-
+        print("Database insert response:", response)
     except Exception as db_error:
+        print("Database insert failed:", db_error)
         return jsonify({"error": f"Database insert failed: {str(db_error)}"}), 500
-    return jsonify(formatted_result)  # Send JSON back to frontend
+
+    return jsonify(formatted_result)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

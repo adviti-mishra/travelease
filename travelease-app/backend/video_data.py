@@ -127,5 +127,3 @@ print("Current working directory:", os.getcwd())
 video_url = "https://www.youtube.com/watch?v=sqc1v30C6TA"
 video_data = fetch_video_data(video_url)
 print(video_data)
-
-

@@ -1,62 +1,188 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "./supabaseClient";
 import { useAuth } from "./AuthContext";
-import { useGoogleLogin } from "@react-oauth/google"; 
 import "./past_style.css";
-import summariesData from "./data.json";
 
-interface SummarySummary {
+interface Summary {
   id: number;
-  title: string;
-  displayTitle: string;
-  description: string;
-  imageUrl: string;
+  content: string;
 }
 
 const PastSummaries: React.FC = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
-  const [summaries, setSummaries] = useState<SummarySummary[]>([]);
+  const { user } = useAuth();
+  const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // ✅ Google login function
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const userInfoResponse = await fetch(
-          "https://www.googleapis.com/oauth2/v2/userinfo",
-          {
-            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-          }
-        );
-        const userInfo = await userInfoResponse.json();
-        setUser(userInfo); // ✅ Store user data globally
-        console.log("Login Success:", userInfo);
-      } catch (error) {
-        console.error("Failed to fetch user info:", error);
+  useEffect(() => {
+    const fetchSummaries = async () => {
+      if (!user || !user.id) return; // Ensure user is fully loaded
+
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("summaries")
+        .select("*"); // Fetch all summaries (temporary)
+
+      if (error) {
+        console.error("Error fetching summaries:", error);
+      } else {
+        setSummaries(data);
       }
-    },
-    onError: () => {
-      console.log("Login Failed");
-    },
-  });
 
-  // ✅ If the user is not logged in, trigger Google login automatically
-  useEffect(() => {
-    if (!user) {
-      login(); // 🚀 Auto-trigger Google OAuth
+      setLoading(false);
+    };
+
+    if (user) {
+      fetchSummaries();
     }
-  }, [user, login]);
+  }, [user]); // Run when user updates
 
-  useEffect(() => {
-    setSummaries(summariesData.summaries);
-  }, []);
+  const renderSummaryContent = (summaryContent: any): React.ReactNode => {
+    try {
+      // Handle different types of content
+      let summaryObj;
+
+      if (typeof summaryContent === 'string') {
+        try {
+          summaryObj = JSON.parse(summaryContent);
+        } catch (e) {
+          return <pre>{summaryContent}</pre>;
+        }
+      } else {
+        summaryObj = summaryContent;
+      }
+
+      if (!summaryObj || typeof summaryObj !== 'object') {
+        return <pre>{String(summaryContent)}</pre>;
+      }
+
+      return (
+        <div className="summary-sections">
+          {Object.entries(summaryObj).map(([section, content]: [string, any]) => (
+            <div key={section} className="summary-section">
+              <h3>{formatSectionTitle(section)}</h3>
+              {renderSectionContent(content)}
+            </div>
+          ))}
+        </div>
+      );
+    } catch (error) {
+      return <pre>{JSON.stringify(summaryContent, null, 2)}</pre>;
+    }
+  };
+
+  const renderSectionContent = (content: any): React.ReactNode => {
+    if (content === null || content === undefined) {
+      return null;
+    }
+
+    if (typeof content === 'string') {
+      return <p>{content}</p>;
+    }
+
+    if (Array.isArray(content)) {
+      return (
+        <ul>
+          {content.map((item: any, index: number) => (
+            <li key={index}>
+              {typeof item === 'object' && item !== null
+                ? renderObjectItem(item)
+                : item}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    if (typeof content === 'object' && content.information && Array.isArray(content.information)) {
+      return (
+        <ul>
+          {content.information.map((item: string, index: number) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    if (typeof content === 'object') {
+      return (
+        <div className="nested-content">
+          {Object.entries(content).map(([key, value]: [string, any], index) => (
+            <div key={index} className="nested-item">
+              <h4>{formatSectionTitle(key)}</h4>
+              {renderSectionContent(value)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <p>{String(content)}</p>;
+  };
+
+  const renderObjectItem = (item: any): React.ReactNode => {
+    if (item.name) {
+      return (
+        <div>
+          <strong>{item.name}</strong>
+          {item.description && <p>{item.description}</p>}
+          {item.recommendation && <p><em>Recommendation: </em>{item.recommendation}</p>}
+          {item.note && <p><em>Note: </em>{item.note}</p>}
+          {Object.entries(item)
+            .filter(([key]) => !['name', 'description', 'recommendation', 'note'].includes(key))
+            .map(([key, value]) => (
+              <div key={key} className="sub-item">
+                <strong>{formatSectionTitle(key)}: </strong>
+                {typeof value === 'object'
+                  ? renderSectionContent(value)
+                  : String(value)}
+              </div>
+            ))}
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        {Object.entries(item).map(([key, value]) => (
+          <div key={key} className="sub-item">
+            <strong>{formatSectionTitle(key)}: </strong>
+            {typeof value === 'object'
+              ? renderSectionContent(value)
+              : String(value)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const formatSectionTitle = (title: string): string => {
+    return title
+      .split('_')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  if (!user) {
+    return (
+      <div className="past-container">
+        <h2>Please log in to view your summaries.</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="past-container">
       <div className="past-header">
         <div className="profile-circle">
-          {user?.picture ? (
-            <img src={user.picture} alt="Profile" className="profile-image" />
+          {user.user_metadata?.avatar_url ? (
+            <img
+              src={user.user_metadata.avatar_url}
+              alt="Profile"
+              className="profile-image"
+            />
           ) : (
             <img src="/" alt="Profile" className="profile-image" />
           )}
@@ -78,25 +204,19 @@ const PastSummaries: React.FC = () => {
         </div>
       </div>
 
-      <div className="summaries-list">
-        {summaries.map((summary) => (
-          <div key={summary.id} className="summary-card">
-            <div className="summary-image-container">
-              <img
-                src={summary.imageUrl}
-                alt={summary.title}
-                className="summary-image"
-              />
-              <div className="image-overlay">
-                <span className="image-title">{summary.displayTitle}</span>
-              </div>
+      {loading ? (
+        <p>Loading summaries...</p>
+      ) : summaries.length === 0 ? (
+        <p>No past summaries found.</p>
+      ) : (
+        <div className="summaries-list">
+          {summaries.map((summary) => (
+            <div key={summary.id} className="summary-card">
+              <p className="summary-content">{renderSummaryContent(summary.content)}</p>
             </div>
-            <div className="summary-content">
-              <p className="summary-description">{summary.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

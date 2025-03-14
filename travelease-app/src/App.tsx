@@ -64,120 +64,78 @@ function FirstPage() {
       handleGoogleLogin();
       return;
     }
-    alert(`Link Submitted: ${link}`);
+
+    // Get the Supabase JWT token
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
 
 
-    if (isLoading) {
+    if (!token) {
+      console.error("No access token available.");
       return;
     }
 
-    // Set loading state
     setIsLoading(true);
-    setSummaryData(null); // Clear previous data
+    setSummaryData(null);
 
     try {
       console.log("Sending request with link:", link);
-      
-      // Create a controller for abort signal with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
-      try {
-        const response = await fetch("http://127.0.0.1:5000/process", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ link }),
-          signal: controller.signal
-        });
-        
-        // Clear the timeout since the request completed
-        clearTimeout(timeoutId);
 
-        console.log("Response status:", response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Server error (${response.status}): ${errorText}`);
-          throw new Error(`Server responded with status: ${response.status}. Details: ${errorText}`);
-        }
+      const response = await fetch("http://127.0.0.1:5000/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // ✅ Send token in headers
+        },
+        body: JSON.stringify({ link })
+      });
 
-        const contentType = response.headers.get("content-type");
-        console.log("Content-Type:", contentType);
-        
-        // Parse the JSON response
-        try {
-          const data = await response.json();
-          console.log("Parsed response data:", data);
-          setSummaryData(data);
-        } catch (jsonError) {
-          console.error("Error parsing JSON:", jsonError);
-          
-          // If JSON parsing fails, try to get the text
-          const textData = await response.text();
-          console.log("Raw response text:", textData);
-          
-          if (textData.includes("success?")) {
-            // This is the "^ success?" response which indicates Flask returned text instead of JSON
-            // Try to restart the request or inform the user
-            setSummaryData({ error: "The server returned an unexpected response format. Please try again." });
-          } else {
-            setSummaryData({ summary: textData });
-          }
-        }
-      } catch (error) {
-        // Type guard for AbortError
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.error("Request timed out after 30 seconds");
-          throw new Error("Request timed out. Please try again.");
-        }
-        throw error;
+      console.log("Response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Server error (${response.status}): ${errorText}`);
+        throw new Error(`Server responded with status: ${response.status}. Details: ${errorText}`);
       }
+
+      const data = await response.json();
+      console.log("Parsed response data:", data);
+      setSummaryData(data);
     } catch (error) {
       console.error("Error details:", error);
-      
-      let errorMessage = "An unknown error occurred";
-      
-      // Check if it's a network error
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        errorMessage = "Network error: Is your Flask server running at http://127.0.0.1:5000?";
-      } else if (error instanceof Error) {
-        errorMessage = `Failed to send link: ${error.message}`;
-      }
-      
-      setSummaryData({ error: errorMessage });
+      setSummaryData({ error: `Failed to send link: ${error.message}` });
     } finally {
-      // Reset loading state whether successful or not
       setIsLoading(false);
     }
   };
+
+
 
   return (
     <div className="container">
       <div className="header">
         <div className="profile-section">
-        {user && user.user_metadata?.avatar_url ? (
+          {user && user.user_metadata?.avatar_url ? (
             <img src={user.user_metadata.avatar_url} alt="Profile" className="profile-image" />
           ) : null}
         </div>
 
-        
+
 
         <div className="auth-section">
-        {user ? (
-          <div className="google-login-container">
-            <button className="logout-button" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        ) : (
-          <div className="google-login-container">
-            <button className="login-button" onClick={handleGoogleLogin}>
-              Sign in with Google
-            </button>
-          </div>
-        )}
+          {user ? (
+            <div className="google-login-container">
+              <button className="logout-button" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="google-login-container">
+              <button className="login-button" onClick={handleGoogleLogin}>
+                Sign in with Google
+              </button>
+            </div>
+          )}
         </div>
         <div className="logo-section">
           <h1 className="logo-text">TravelEase</h1>
@@ -191,7 +149,7 @@ function FirstPage() {
           </button>
         </div>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="link-form">
         <input
           type="text"
@@ -209,7 +167,7 @@ function FirstPage() {
           )}
         </button>
       </form>
-      
+
       {summaryData && (
         <div className="summary-container">
           <h2 className="summary-title">Travel Summary</h2>
@@ -236,10 +194,10 @@ function FirstPage() {
 function renderSummaryContent(summaryContent: any): React.ReactNode {
   try {
     console.log("Raw summary content:", summaryContent);
-    
+
     // Handle different types of content
     let summaryObj;
-    
+
     if (typeof summaryContent === 'string') {
       // If it's a string, try to parse it as JSON
       try {
@@ -254,13 +212,13 @@ function renderSummaryContent(summaryContent: any): React.ReactNode {
       // If it's already an object, use it directly
       summaryObj = summaryContent;
     }
-    
+
     // Ensure we have an object to work with
     if (!summaryObj || typeof summaryObj !== 'object') {
       console.error("Summary is not a valid object:", summaryObj);
       return <pre>{String(summaryContent)}</pre>;
     }
-    
+
     return (
       <div className="summary-sections">
         {Object.entries(summaryObj).map(([section, content]: [string, any]) => (
@@ -283,27 +241,27 @@ function renderSectionContent(content: any): React.ReactNode {
   if (content === null || content === undefined) {
     return null;
   }
-  
+
   // For string content
   if (typeof content === 'string') {
     return <p>{content}</p>;
   }
-  
+
   // For array content
   if (Array.isArray(content)) {
     return (
       <ul>
         {content.map((item: any, index: number) => (
           <li key={index}>
-            {typeof item === 'object' && item !== null 
-              ? renderObjectItem(item) 
+            {typeof item === 'object' && item !== null
+              ? renderObjectItem(item)
               : item}
           </li>
         ))}
       </ul>
     );
   }
-  
+
   // For object content with 'information' property
   if (typeof content === 'object' && content.information && Array.isArray(content.information)) {
     return (
@@ -314,7 +272,7 @@ function renderSectionContent(content: any): React.ReactNode {
       </ul>
     );
   }
-  
+
   // For general object content
   if (typeof content === 'object') {
     return (
@@ -328,7 +286,7 @@ function renderSectionContent(content: any): React.ReactNode {
       </div>
     );
   }
-  
+
   // Fallback for other types
   return <p>{String(content)}</p>;
 }
@@ -347,7 +305,7 @@ function renderObjectItem(item: any): React.ReactNode {
           .map(([key, value]) => (
             <div key={key} className="sub-item">
               <strong>{formatSectionTitle(key)}: </strong>
-              {typeof value === 'object' 
+              {typeof value === 'object'
                 ? renderSectionContent(value)
                 : String(value)}
             </div>
@@ -355,13 +313,13 @@ function renderObjectItem(item: any): React.ReactNode {
       </div>
     );
   }
-  
+
   return (
     <div>
       {Object.entries(item).map(([key, value]) => (
         <div key={key} className="sub-item">
           <strong>{formatSectionTitle(key)}: </strong>
-          {typeof value === 'object' 
+          {typeof value === 'object'
             ? renderSectionContent(value)
             : String(value)}
         </div>
