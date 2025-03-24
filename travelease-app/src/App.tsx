@@ -89,13 +89,14 @@ function FirstPage() {
     try {
       console.log("Sending request with link:", link);
 
-      const response = await fetch("http://127.0.0.1:5000/process", {
+      const response = await fetch("http://127.0.0.1:5001/process", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`, // ✅ Send token in headers
         },
         body: JSON.stringify({ link }),
+        credentials: "include"
       });
 
       console.log("Response status:", response.status);
@@ -113,7 +114,7 @@ function FirstPage() {
       setSummaryData(data.summary);
     } catch (error) {
       console.error("Error details:", error);
-      setSummaryData({ error: `Failed to send link: ${error.message}` });
+      setSummaryData({ error: `Failed to send link: ${(error as Error).message}` });
     } finally {
       setIsLoading(false);
     }
