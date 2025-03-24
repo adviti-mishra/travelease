@@ -1,21 +1,33 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Flask, request, jsonify, send_from_directory
 from video_data import fetch_video_data  
 import os
 import jwt 
 from supabase import create_client
 import json
+from flask_cors import CORS
 
+# Load Supabase credentials
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
 supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# Set Flask to serve React's build directory (go up one level)
+app = Flask(__name__, static_folder="../build", static_url_path="")
 
-app = Flask(__name__)
-CORS(app)  # Allows requests from frontend
+CORS(app, supports_credentials=True, origins=["http://localhost:5001"])
 
-# Function to decode JWT and get user ID
+# Serve React's index.html for the root
+@app.route("/")
+def serve_frontend():
+    return send_from_directory("../build", "index.html")
+
+# Serve all React static files
+@app.route("/<path:path>")
+def serve_static_files(path):
+    return send_from_directory("../build", path)
+
+# Decode JWT and get user ID
 def get_user_id():
     auth_header = request.headers.get("Authorization")
     if not auth_header:
@@ -27,6 +39,7 @@ def get_user_id():
     except jwt.DecodeError:
         return None
 
+# Store summary in Supabase
 @app.route("/summaries", methods=["POST"])
 def store_summary():
     user_id = get_user_id()
@@ -46,6 +59,7 @@ def store_summary():
 
     return jsonify(response.data), 201
 
+# Get summaries from Supabase
 @app.route("/summaries", methods=["GET"])
 def get_summaries():
     user_id = request.args.get("user_id")  
@@ -64,6 +78,7 @@ def get_summaries():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+# Process video data
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json  
@@ -88,12 +103,12 @@ def process():
         print("Error: fetch_video_data returned an invalid response format")
         return jsonify({"error": "Failed to generate summary"}), 500
 
-    formatted_result = {"summary": result["summary"]}  # Ensure correct structure
+    formatted_result = {"summary": result["summary"]}  
 
     try:
         response = supabase_client.table("summaries").insert({
             "user_id": user_id,
-            "content": json.dumps(result["summary"])  # Store the summary dictionary
+            "content": json.dumps(result["summary"])  
         }).execute()
         print("Database insert response:", response)
     except Exception as db_error:
@@ -102,5 +117,6 @@ def process():
 
     return jsonify(formatted_result)
 
+# Run the app
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+        app.run(host="0.0.0.0", port=5001, debug=True)
