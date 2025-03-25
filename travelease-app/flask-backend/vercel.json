@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "flask-backend/api/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "flask-backend/api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "src/$1"
+    }
+  ]
+}

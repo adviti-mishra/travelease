@@ -89,7 +89,7 @@ function FirstPage() {
     try {
       console.log("Sending request with link:", link);
 
-      const response = await fetch("http://127.0.0.1:5001/process", {
+      const response = await fetch("https://travelease-eneaamh4x-adviti-mishras-projects.vercel.app/api/process", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
