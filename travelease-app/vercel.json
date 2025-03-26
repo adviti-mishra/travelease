@@ -2,25 +2,25 @@
   "version": 2,
   "builds": [
     {
-      "src": "travelease-app/backend/api/index.py",
+      "src": "backend/api/index.py",
       "use": "@vercel/python"
     },
     {
-      "src": "travelease-app/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "travelease-app/build"
+        "distDir": "build"
       }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "travelease-app/backend/api/index.py"
+      "dest": "backend/api/index.py"
     },
     {
       "src": "/(.*)",
-      "dest": "travelease-app/build/$1"
+      "dest": "build/$1"
     }
   ]
 }
