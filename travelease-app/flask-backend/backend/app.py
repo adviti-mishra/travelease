@@ -9,13 +9,17 @@ from flask_cors import CORS
 # Load Supabase credentials
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+# URL for Supabase's JWT public key (for verification)
+SUPABASE_JWT_PUBLIC_KEY_URL = f"{SUPABASE_URL}/auth/v1/public"
+
 
 supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Set Flask to serve React's build directory (go up one level)
 app = Flask(__name__)
 
-CORS(app)
+CORS(app, origins=["https://travelease-ow7tfdh80-adviti-mishras-projects.vercel.app"],
+     allow_headers=["Content-Type", "Authorization"])
 
 # Serve React's index.html for the root
 @app.route("/")
@@ -29,14 +33,24 @@ def serve_static_files(path):
 
 # Decode JWT and get user ID
 def get_user_id():
+    # Extract the Authorization header from the request
     auth_header = request.headers.get("Authorization")
     if not auth_header:
         return None
-    token = auth_header.split("Bearer ")[-1]
+
+    token = auth_header.split("Bearer ")[-1]  # Extract the token from the header
+    if not token:
+        return None
+
     try:
-        decoded = jwt.decode(token, options={"verify_signature": False})  # Do proper verification in production
-        return decoded.get("sub")  # Supabase stores user ID in 'sub'
-    except jwt.DecodeError:
+        # Use Supabase's API to verify the JWT
+        user = supabase_client.auth.api.get_user(token)
+        if user.get('user', None):
+            return user['user']['id']  # Return the user ID from the decoded JWT
+        else:
+            return None
+    except Exception as e:
+        print(f"JWT verification failed: {e}")
         return None
 
 # Store summary in Supabase
