@@ -13,9 +13,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Set Flask to serve React's build directory (go up one level)
-app = Flask(__name__, static_folder="../build", static_url_path="")
+app = Flask(__name__)
 
-CORS(app, supports_credentials=True, origins=["http://localhost:5001"])
+CORS(app)
 
 # Serve React's index.html for the root
 @app.route("/")
