@@ -20,7 +20,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "travelease-app/build/index.html"
+      "dest": "travelease-app/build/$1"
     }
   ]
 }
