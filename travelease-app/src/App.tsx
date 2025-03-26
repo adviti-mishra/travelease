@@ -8,9 +8,6 @@ import {
 } from "react-router-dom";
 import PastSummaries from "./pastsummaries";
 import "./style.css";
-import { useAuth } from "./AuthContext";
-import { jwtDecode } from "jwt-decode";
-import { AuthProvider } from "./AuthContext";
 
 function FirstPage() {
   const navigate = useNavigate();
