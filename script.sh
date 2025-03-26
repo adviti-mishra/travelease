@@ -8,7 +8,7 @@ echo "Building frontend..."
 npm run build || { echo "Frontend build failed"; exit 1; }
 
 # Navigate to backend
-cd backend || { echo "Failed to navigate to backend"; exit 1; }
+cd flask-backend/backend || { echo "Failed to navigate to backend"; exit 1; }
 
 # Run backend server
 echo "Starting backend..."
