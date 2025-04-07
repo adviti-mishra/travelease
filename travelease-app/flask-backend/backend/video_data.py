@@ -2,10 +2,13 @@ import os
 import re
 import requests
 import json
+import pinecone
 from supadata import Supadata, SupadataError
 from dotenv import load_dotenv
 from openai import OpenAI
 from flask import jsonify
+from pinecone import Pinecone
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Load environment variables from .env
 load_dotenv(override=True)
@@ -14,15 +17,16 @@ load_dotenv(override=True)
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 SUPADATA_API_KEY = os.getenv("SUPADATA_API_KEY")
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")  # Set OpenAI API key
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
 client = OpenAI()
+pc = Pinecone(api_key=PINECONE_API_KEY)
 
 if not YOUTUBE_API_KEY or not SUPADATA_API_KEY:
     raise ValueError("API keys are missing! Check your .env file.")
 
 # Initialize Supadata client
 supadata = Supadata(api_key=SUPADATA_API_KEY)
-
 
 def extract_video_id(url: str):
     """Extracts the YouTube video ID from a given URL."""
@@ -109,6 +113,10 @@ def get_transcript_summary(video_id: str):
     # For now commented out so we avoid repeated API calls, eventualy remove file stuff
     transcript = get_video_transcript(video_id)
 
+    #upload the transcript to pinecone db
+
+    embed_transcript_with_splitting(video_id=video_id, transcript=transcript)
+
     # Ensure the file exists before trying to open it
     """
      script_dir = os.path.dirname(os.path.abspath(
@@ -138,6 +146,81 @@ def get_transcript_summary(video_id: str):
     
     return structured_json
 
+
+def embed_transcript_with_splitting(video_id, transcript, chunk_size=1000, chunk_overlap=200):
+    """
+    Split transcript into chunks and embed each chunk using ada-002,
+    then store all chunks in Pinecone.
+    
+    Args:
+        video_id (str): YouTube video ID
+        transcript (str): Full transcript text
+        chunk_size (int): Maximum size of each chunk
+        chunk_overlap (int): Overlap between chunks
+        
+    Returns:
+        dict: Status information
+    """
+    try:
+        # Initialize LangChain text splitter
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
+            separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""]
+        )
+        
+        # Split the transcript into chunks
+        chunks = text_splitter.split_text(transcript)
+        print(f"Split transcript into {len(chunks)} chunks")
+        
+        # Get Pinecone index
+        index = pc.Index("travelease")
+        
+        # Process each chunk and prepare vectors
+        vectors = []
+        for i, chunk in enumerate(chunks):
+            # Create embedding for this chunk
+            response = client.embeddings.create(
+                model="text-embedding-ada-002",
+                input=chunk
+            )
+            embedding = response.data[0].embedding
+            
+            # Create unique ID for this chunk
+            unique_id = f"transcript-{video_id}-chunk-{i}"
+            
+            # Create metadata for this chunk
+            metadata = {
+                "video_id": video_id,
+                "type": "transcript_chunk",
+                "chunk_index": i,
+                "total_chunks": len(chunks),
+                "text": chunk[:1000]  # Store beginning of chunk for context
+            }
+            
+            # Add to vectors list
+            vectors.append({
+                "id": unique_id,
+                "values": embedding,
+                "metadata": metadata
+            })
+        
+        index.upsert(vectors=vectors)
+        
+        return {
+            "status": "success",
+            "message": f"Successfully embedded {len(chunks)} transcript chunks",
+            "chunks_count": len(chunks),
+            "video_id": video_id
+        }
+        
+    except Exception as e:
+        print(f"Error embedding transcript: {str(e)}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 # Example usage
 # print("Current working directory:", os.getcwd())
