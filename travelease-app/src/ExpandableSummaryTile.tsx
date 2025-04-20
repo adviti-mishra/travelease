@@ -11,10 +11,15 @@ interface ExpandableSummaryTileProps {
 }
 
 // Type definitions to help TypeScript
-interface SummaryDetails {
+interface SummarySection {
   details?: string[];
   description?: string;
   [key: string]: any;
+}
+
+interface ContentObject {
+  [key: string]: any;
+  details?: string[];
 }
 
 const ExpandableSummaryTile: React.FC<ExpandableSummaryTileProps> = ({
@@ -58,65 +63,143 @@ const ExpandableSummaryTile: React.FC<ExpandableSummaryTileProps> = ({
     }
   };
 
-  // Get a preview of the content to display when collapsed - showing more text
+  // Direct extraction of actual content from the summary
   const getContentPreview = (content: string): string => {
     try {
-      let contentObj;
-      if (typeof content === "string") {
-        contentObj = JSON.parse(content);
-      } else {
-        contentObj = content;
+      // Try parsing the content as JSON
+      let parsedContent: ContentObject;
+      try {
+        parsedContent = typeof content === "string" ? JSON.parse(content) : content;
+      } catch (e) {
+        console.error("Failed to parse content as JSON:", e);
+        return "Click to view travel details";
       }
 
-      if (typeof contentObj === "object" && contentObj !== null) {
-        // Gather all detail texts from the content object
-        let allDetails: string[] = [];
+      // Function to extract text from nested objects
+      const extractTextItems = (obj: any): string[] => {
+        const items: string[] = [];
         
-        // Process all sections to extract details
-        for (const [key, value] of Object.entries(contentObj)) {
-          if (typeof value === "object" && value !== null) {
-            // Cast to our helper interface to access properties safely
-            const section = value as SummaryDetails;
-            
-            // If it has details array, add them to our collection
-            if (Array.isArray(section.details) && section.details.length > 0) {
-              allDetails = [...allDetails, ...section.details];
-            }
-            
-            // If it has a description field, add it too
-            if (section.description) {
-              allDetails.push(section.description);
-            }
-          } else if (Array.isArray(value) && value.length > 0) {
-            // If the value is an array, add all items
-            allDetails = [...allDetails, ...value.map(item => String(item))];
-          } else if (value) {
-            // If it's a simple value, add it
-            allDetails.push(String(value));
-          }
+        if (!obj || typeof obj !== "object") {
+          return items;
         }
         
-        // If we collected any details, use them
-        if (allDetails.length > 0) {
-          // Take up to 5 details and join them
-          return allDetails.slice(0, 5).join('. ');
+        // Handle different types of objects
+        if (Array.isArray(obj)) {
+          // If it's an array, add each string item
+          obj.forEach(item => {
+            if (typeof item === "string") {
+              items.push(`• ${item}`);
+            } else if (typeof item === "object" && item !== null) {
+              // For object items, try to get meaningful properties
+              if (item.name || item.title) {
+                items.push(`• ${item.name || item.title}`);
+              }
+            }
+          });
+        } else {
+          // For regular objects, look for useful properties
+          Object.entries(obj).forEach(([key, value]) => {
+            // Skip description properties
+            if (key.toLowerCase() === "description") {
+              return;
+            }
+            
+            if (Array.isArray(value)) {
+              // Add the key as a header
+              items.push(formatTitle(key));
+              
+              // Add the first few items from the array
+              value.slice(0, 3).forEach(item => {
+                if (typeof item === "string") {
+                  items.push(`• ${item}`);
+                }
+              });
+            } else if (typeof value === "object" && value !== null) {
+              // For nested objects, check if they have details
+              const typedValue = value as SummarySection;
+              if (typedValue.details && Array.isArray(typedValue.details)) {
+                items.push(formatTitle(key));
+                typedValue.details.slice(0, 3).forEach((detail: any) => {
+                  if (typeof detail === "string") {
+                    items.push(`• ${detail}`);
+                  }
+                });
+              }
+            }
+          });
         }
+        
+        return items;
+      };
 
-        // Fallback: Convert the first section to string
-        const firstKey = Object.keys(contentObj)[0];
-        if (firstKey) {
-          const firstValue = contentObj[firstKey];
-          if (typeof firstValue === "object" && firstValue !== null) {
-            return JSON.stringify(firstValue).slice(0, 150) + "...";
-          } else {
-            return String(firstValue);
+      // Start extracting content
+      let contentLines: string[] = [];
+      
+      // Process different content structures
+      if (typeof parsedContent === "object" && parsedContent !== null) {
+        // Try to find the most important sections
+        const getTopLevelDetails = (): string[] | null => {
+          // Look for details at the top level
+          if (parsedContent.details && Array.isArray(parsedContent.details)) {
+            return [`Details:`, ...parsedContent.details.slice(0, 4).map(d => `• ${d}`)];
+          }
+          return null;
+        };
+        
+        // Check for specific structure types we know about
+        const trySpecificStructures = (): string[] | null => {
+          // Travel-specific structure with sections like getting_to_nyc, etc.
+          const travelKeys = ['getting_to_nyc', 'commuting_within_nyc', 'tourist_attractions', 
+                             'food_and_dining', 'safety_tips', 'broadways_and_shows'];
+          
+          for (const key of travelKeys) {
+            if (parsedContent[key] && typeof parsedContent[key] === 'object') {
+              const section = parsedContent[key] as SummarySection;
+              if (section.details && Array.isArray(section.details)) {
+                return [formatTitle(key) + ':', ...section.details.slice(0, 4).map(d => `• ${d}`)];
+              }
+            }
+          }
+          return null;
+        };
+
+        // Try different extraction strategies
+        const topLevelDetails = getTopLevelDetails();
+        const specificStructure = trySpecificStructures();
+        
+        if (topLevelDetails) {
+          contentLines = topLevelDetails;
+        } else if (specificStructure) {
+          contentLines = specificStructure;
+        } else {
+          // Generic extraction for unknown structures
+          for (const [key, value] of Object.entries(parsedContent)) {
+            if (typeof value === "object" && value !== null) {
+              const extracted = extractTextItems(value);
+              if (extracted.length > 0) {
+                contentLines.push(formatTitle(key) + ":");
+                contentLines = [...contentLines, ...extracted.slice(0, 4)];
+                contentLines.push(""); // Add spacing
+                
+                // Stop after getting enough content
+                if (contentLines.length >= 10) break;
+              }
+            }
           }
         }
       }
-
-      return "Click to view full summary details";
-    } catch (e) {
-      return "Click to view full summary details";
+      
+      // If we extracted content, format and return it
+      if (contentLines.length > 0) {
+        return contentLines.join('\n');
+      }
+      
+      // Fallback for empty content
+      return "Tap to view travel details";
+      
+    } catch (error) {
+      console.error("Error extracting content preview:", error);
+      return "Click to view travel details";
     }
   };
 
@@ -165,7 +248,7 @@ const ExpandableSummaryTile: React.FC<ExpandableSummaryTileProps> = ({
         </div>
       ) : (
         <div className="summary-preview">
-          <p>{getContentPreview(summary.content)}</p>
+          <pre className="preview-text">{getContentPreview(summary.content)}</pre>
         </div>
       )}
     </div>
