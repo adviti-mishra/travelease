@@ -2,9 +2,10 @@ Flask==3.0.2
 flask-cors==4.0.0
 PyJWT==2.8.0
 supabase==2.3.4
+supadata==1.1.0
 python-dotenv==1.0.1
 requests==2.31.0
 pinecone-client==3.0.2
 openai==1.12.0
 langchain==0.1.9
-supadata==0.1.0
+gunicorn==20.1.0
