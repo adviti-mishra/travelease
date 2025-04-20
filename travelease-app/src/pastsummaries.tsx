@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./AuthContext";
+import ExpandableSummaryTile from "./ExpandableSummaryTile";
 import "./past_style.css";
 
 interface Summary {
   id: number;
   content: string;
+  created_at?: string;
 }
 
 const PastSummaries: React.FC = () => {
@@ -21,7 +23,10 @@ const PastSummaries: React.FC = () => {
 
       setLoading(true);
 
-      const { data, error } = await supabase.from("summaries").select("*"); // Fetch all summaries (temporary)
+      const { data, error } = await supabase
+        .from("summaries")
+        .select("*")
+        .order('created_at', { ascending: false }); // Order by created_at descending
 
       if (error) {
         console.error("Error fetching summaries:", error);
@@ -219,7 +224,7 @@ const PastSummaries: React.FC = () => {
         <div className="past-title-container">
           <h1 className="past-title">TravelEase</h1>
           <div className="past-divider"></div>
-          <h2 className="past-subtitle">Past Summaries</h2>
+          <h2 className="past-subtitle">Past Summaries v2</h2>
         </div>
 
         <div
@@ -237,13 +242,13 @@ const PastSummaries: React.FC = () => {
       ) : summaries.length === 0 ? (
         <h2 className="no-summaries">No past summaries found.</h2>
       ) : (
-        <div className="summaries-list">
+        <div className="summaries-grid">
           {summaries.map((summary) => (
-            <div key={summary.id} className="summary-card">
-              <p className="summary-content">
-                {renderSummaryContent(summary.content)}
-              </p>
-            </div>
+            <ExpandableSummaryTile 
+              key={summary.id} 
+              summary={summary}
+              renderSummaryContent={renderSummaryContent}
+            />
           ))}
         </div>
       )}
