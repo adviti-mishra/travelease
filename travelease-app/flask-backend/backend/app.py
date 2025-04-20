@@ -17,20 +17,17 @@ supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Set Flask to serve React's build directory (go up one level)
 app = Flask(__name__)
-
-CORS(app, origins=["https://travelease-ow7tfdh80-adviti-mishras-projects.vercel.app"],
-     allow_headers=["Content-Type", "Authorization"])
-
-@app.after_request
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    return response
-
-@app.route('/api/process', methods=['OPTIONS'])
-def handle_options():
-    return '', 200
+CORS(app, resources={
+    r"/*": {
+       "origins": [
+        "http://localhost:3000",
+        "https://travelease-ow7tfdh80-adviti-mishras-projects.vercel.app",
+        "https://travelease-eneaamh4x-adviti-mishras-projects.vercel.app"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 # Serve React's index.html for the root
 @app.route("/")
@@ -40,29 +37,49 @@ def serve_frontend():
 # Serve all React static files
 @app.route("/<path:path>")
 def serve_static_files(path):
+    # List of static files that don't require authentication
+    public_files = ['manifest.json', 'favicon.ico', 'robots.txt']
+    if path in public_files:
+        return send_from_directory("../build", path)
+    
+    # For other files, check authentication
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
     return send_from_directory("../build", path)
+
+# Specific route for manifest.json
+@app.route("/manifest.json")
+def serve_manifest():
+    return send_from_directory("../build", "manifest.json")
 
 # Decode JWT and get user ID
 def get_user_id():
-    # Extract the Authorization header from the request
     auth_header = request.headers.get("Authorization")
+    print("Authorization header:", auth_header)
+
     if not auth_header:
+        print("Missing Authorization header")
         return None
 
-    token = auth_header.split("Bearer ")[-1]  # Extract the token from the header
-    if not token:
-        return None
+    token = auth_header.split("Bearer ")[-1]
+    print("Extracted token:", token[:20] + "...")
 
     try:
-        # Use Supabase's API to verify the JWT
-        user = supabase_client.auth.api.get_user(token)
-        if user.get('user', None):
-            return user['user']['id']  # Return the user ID from the decoded JWT
+        user_response = supabase_client.auth.get_user(token)
+        print("Supabase user response:", user_response)
+
+        if user_response and user_response.user:
+            print("✅ Authenticated user ID:", user_response.user.id)
+            return user_response.user.id
         else:
+            print("❌ No user returned in response.")
             return None
     except Exception as e:
-        print(f"JWT verification failed: {e}")
+        print("❌ Error verifying JWT:", e)
         return None
+
 
 # Store summary in Supabase
 @app.route("/summaries", methods=["POST"])
@@ -103,29 +120,24 @@ def get_summaries():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-# Process video data
-@app.route('/process', methods=['POST'])
+@app.route('/process', methods=['POST', 'OPTIONS'])
 def process():
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+
     data = request.json  
     video_link = data.get('link')
     print("Received link:", video_link)
 
     if not video_link:
-        print("Error: No link provided")
         return jsonify({"error": "No link provided"}), 400
     
     user_id = get_user_id()  
-    print("Extracted user ID:", user_id)
-    
     if not user_id:
-        print("Error: Unauthorized access")
         return jsonify({"error": "Unauthorized. Please log in."}), 401
 
     result = fetch_video_data(video_link)
-    print("Fetched video data:", result)
-
     if not result or "summary" not in result or not isinstance(result["summary"], dict):
-        print("Error: fetch_video_data returned an invalid response format")
         return jsonify({"error": "Failed to generate summary"}), 500
 
     formatted_result = {"summary": result["summary"]}  
@@ -135,9 +147,7 @@ def process():
             "user_id": user_id,
             "content": json.dumps(result["summary"])  
         }).execute()
-        print("Database insert response:", response)
     except Exception as db_error:
-        print("Database insert failed:", db_error)
         return jsonify({"error": f"Database insert failed: {str(db_error)}"}), 500
 
     return jsonify(formatted_result)

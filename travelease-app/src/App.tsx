@@ -79,6 +79,8 @@ function FirstPage() {
       console.error("No access token available.");
       return;
     }
+    console.log("Supabase token:", token);
+
 
     setIsLoading(true);
     setSummaryData(null);
@@ -86,7 +88,7 @@ function FirstPage() {
     try {
       console.log("Sending request with link:", link);
 
-      const response = await fetch("https://travelease-eneaamh4x-adviti-mishras-projects.vercel.app/api/process", {
+      const response = await fetch("http://localhost:5001/process", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
