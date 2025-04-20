@@ -67,14 +67,7 @@ def get_video_transcript(video_id: str):
         return "Transcript not available"
 
 
-
 def fetch_video_data(video_url: str):
-
-    # formatted_summary = "\n".join([
-    #     f"**{key}**:\n- " + "\n- ".join(value) 
-    #     for key, value in data.items()
-    # ])
-    # return formatted_summary
     try:
         video_id = extract_video_id(video_url)
         video_details = get_video_details(video_id)
@@ -83,23 +76,13 @@ def fetch_video_data(video_url: str):
         if not isinstance(summary, dict):
             return {"error": "Invalid summary format."}
 
-        # Format summary for frontend display
-        # formatted_summary = {
-        #     section: {
-        #         "Description": f"Recommendations for {section.lower()}.",
-        #         "Details": details
-        #     }
-        #     for section, details in summary.items()
-        # }
-
         print("Fetched summary:", summary)
 
         formatted_summary = "\n".join([
-        f"**{key}**:\n- " + "\n- ".join(map(str, value)) 
-        if isinstance(value, list) else f"**{key}**:\n{json.dumps(value, indent=2)}"
-        for key, value in summary.items()
+            f"**{key}**:\n- " + "\n- ".join(map(str, value)) 
+            if isinstance(value, list) else f"**{key}**:\n{json.dumps(value, indent=2)}"
+            for key, value in summary.items()
         ])
-
 
         return {"summary": summary} # Return as dictionary instead of list
 
@@ -110,29 +93,8 @@ def fetch_video_data(video_url: str):
 def get_transcript_summary(video_id: str):
     "summarizes the raw transcript into neat bullets"
 
-    # For now commented out so we avoid repeated API calls, eventualy remove file stuff
     transcript = get_video_transcript(video_id)
-
-    #upload the transcript to pinecone db
-
     embed_transcript_with_splitting(video_id=video_id, transcript=transcript)
-
-    # Ensure the file exists before trying to open it
-    """
-     script_dir = os.path.dirname(os.path.abspath(
-        __file__))  # Get the script's directory
-    file_path = os.path.join(script_dir, "output.txt")
-    print(file_path)
-
-    with open(file_path, "r", encoding="utf-8") as file:
-        transcript = file.read()
-
-    if transcript == "Transcript not available":
-        return "Summary not available (Transcript missing)."
-    
-    """
-   
-    # print(transcript)
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",  # or "gpt-4"
@@ -220,10 +182,4 @@ def embed_transcript_with_splitting(video_id, transcript, chunk_size=1000, chunk
         return {
             "status": "error",
             "message": str(e)
-        }
-
-# Example usage
-# print("Current working directory:", os.getcwd())
-# video_url = "https://www.youtube.com/watch?v=sqc1v30C6TA"
-# video_data = fetch_video_data(video_url)
-# print(video_data)
+        } 

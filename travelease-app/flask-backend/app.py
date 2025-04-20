@@ -1,17 +1,16 @@
 from flask import Flask, request, jsonify, send_from_directory
-from video_data import fetch_video_data  
 import os
 import jwt 
 from supabase import create_client
 import json
 from flask_cors import CORS
+from api.index import api
 
 # Load Supabase credentials
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 # URL for Supabase's JWT public key (for verification)
 SUPABASE_JWT_PUBLIC_KEY_URL = f"{SUPABASE_URL}/auth/v1/public"
-
 
 supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -28,6 +27,9 @@ CORS(app, resources={
         "supports_credentials": True
     }
 })
+
+# Register the API Blueprint
+app.register_blueprint(api, url_prefix='/api')
 
 # Serve React's index.html for the root
 @app.route("/")
@@ -80,7 +82,6 @@ def get_user_id():
         print("❌ Error verifying JWT:", e)
         return None
 
-
 # Store summary in Supabase
 @app.route("/summaries", methods=["POST"])
 def store_summary():
@@ -119,39 +120,7 @@ def get_summaries():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-@app.route('/process', methods=['POST', 'OPTIONS'])
-def process():
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'}), 200
-
-    data = request.json  
-    video_link = data.get('link')
-    print("Received link:", video_link)
-
-    if not video_link:
-        return jsonify({"error": "No link provided"}), 400
-    
-    user_id = get_user_id()  
-    if not user_id:
-        return jsonify({"error": "Unauthorized. Please log in."}), 401
-
-    result = fetch_video_data(video_link)
-    if not result or "summary" not in result or not isinstance(result["summary"], dict):
-        return jsonify({"error": "Failed to generate summary"}), 500
-
-    formatted_result = {"summary": result["summary"]}  
-
-    try:
-        response = supabase_client.table("summaries").insert({
-            "user_id": user_id,
-            "content": json.dumps(result["summary"])  
-        }).execute()
-    except Exception as db_error:
-        return jsonify({"error": f"Database insert failed: {str(db_error)}"}), 500
-
-    return jsonify(formatted_result)
 
 # Run the app
 if __name__ == '__main__':
-        app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True) 
