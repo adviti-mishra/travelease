@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import PastSummaries from "./pastsummaries";
 import "./style.css";
+import { BubbleChat } from "flowise-embed-react";
 
 function FirstPage() {
   const navigate = useNavigate();
@@ -39,6 +40,15 @@ function FirstPage() {
       authListener?.subscription.unsubscribe();
     };
   }, []);
+
+  const App = () => {
+    return (
+      <BubbleChat
+        chatflowid="6cb7f43f-9562-4c83-876c-99f440e32ee5"
+        apiHost="https://atishayk-travelease.hf.space"
+      />
+    );
+  };
 
   const handleGoogleLogin = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -189,6 +199,10 @@ function FirstPage() {
             {isLoading ? <span className="loading-spinner"></span> : "Submit"}
           </button>
         </form>
+      </div>
+
+      <div>
+        <App></App>
       </div>
 
       {summaryData && (

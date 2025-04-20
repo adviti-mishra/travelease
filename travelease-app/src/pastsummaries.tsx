@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import { useAuth } from "./AuthContext";
 import ExpandableSummaryTile from "./ExpandableSummaryTile";
+import { BubbleChat } from "flowise-embed-react";
 import "./past_style.css";
 
 interface Summary {
@@ -76,6 +77,15 @@ const PastSummaries: React.FC = () => {
     } catch (error) {
       return <pre>{JSON.stringify(summaryContent, null, 2)}</pre>;
     }
+  };
+
+  const App = () => {
+      return (
+        <BubbleChat
+          chatflowid="6cb7f43f-9562-4c83-876c-99f440e32ee5"
+          apiHost="https://atishayk-travelease.hf.space"
+        />
+      );
   };
 
   const renderSectionContent = (content: any): React.ReactNode => {
@@ -200,10 +210,7 @@ const PastSummaries: React.FC = () => {
       {/* Video Background */}
       <div className="video-background">
         <video autoPlay loop muted>
-          <source
-            src="https://path-to-your-video.mp4"
-            type="video/mp4"
-          />
+          <source src="https://path-to-your-video.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>
@@ -237,6 +244,10 @@ const PastSummaries: React.FC = () => {
         </div>
       </div>
 
+      <div>
+        <App></App>
+      </div>
+
       {loading ? (
         <h2 className="loading-summaries">Loading summaries...</h2>
       ) : summaries.length === 0 ? (
@@ -244,8 +255,8 @@ const PastSummaries: React.FC = () => {
       ) : (
         <div className="summaries-grid">
           {summaries.map((summary) => (
-            <ExpandableSummaryTile 
-              key={summary.id} 
+            <ExpandableSummaryTile
+              key={summary.id}
               summary={summary}
               renderSummaryContent={renderSummaryContent}
             />
