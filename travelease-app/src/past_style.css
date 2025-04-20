@@ -240,9 +240,9 @@ html {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: linear-gradient(135deg, rgba(154, 200, 205, 0.9), rgba(77, 134, 156, 0.9));
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(58, 33, 9, 0.9));
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  color: black;
 }
 
 .summary-tile-header h3 {
@@ -258,7 +258,7 @@ html {
 }
 
 .summary-date {
-  color: #f0f0f0;
+  color: black;
   font-size: 14px;
   margin-right: 10px;
 }
