@@ -52,7 +52,7 @@ langsmith==0.3.32
 MarkupSafe==3.0.2
 mathparse==0.1.2
 matplotlib==3.8.4
-mtools==1.8.0.dev0
+mtools==1.7.2
 multidict==6.1.0
 networkx==3.2.1
 nltk==3.8.1
