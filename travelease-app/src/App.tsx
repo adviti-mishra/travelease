@@ -98,7 +98,7 @@ function FirstPage() {
     try {
       console.log("Sending request with link:", link);
 
-      const response = await fetch("http://localhost:5001/process", {
+      const response = await fetch("https://travelease-ly1a.onrender.com/process", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
