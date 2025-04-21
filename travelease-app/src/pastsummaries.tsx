@@ -19,24 +19,37 @@ const PastSummaries: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+
     const fetchSummaries = async () => {
-      if (!user || !user.id) return; // Ensure user is fully loaded
-
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("summaries")
-        .select("*")
-        .order('created_at', { ascending: false }); // Order by created_at descending
-
-      if (error) {
-        console.error("Error fetching summaries:", error);
-      } else {
-        setSummaries(data);
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+    
+      if (!token) {
+        console.error("Missing access token");
+        return;
       }
-
-      setLoading(false);
+    
+      try {
+        const response = await fetch(`https://travelease-ly1a.onrender.com/summaries`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+    
+        if (!response.ok) {
+          console.error("Failed to fetch summaries:", await response.text());
+          return;
+        }
+    
+        const summaries = await response.json();
+        setSummaries(summaries); 
+      } catch (err) {
+        console.error("Error fetching summaries:", err);
+      } finally {
+        setLoading(false);
+      }
     };
+    
 
     if (user) {
       fetchSummaries();

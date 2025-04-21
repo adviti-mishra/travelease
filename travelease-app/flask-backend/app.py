@@ -105,9 +105,9 @@ def store_summary():
 # Get summaries from Supabase
 @app.route("/summaries", methods=["GET"])
 def get_summaries():
-    user_id = request.args.get("user_id")  
+    user_id = get_user_id()  # ✅ USE JWT!
     if not user_id:
-        return jsonify({"error": "Missing user_id"}), 400
+        return jsonify({"error": "Unauthorized"}), 401
 
     try:
         response = supabase_client.table("summaries") \
@@ -120,6 +120,7 @@ def get_summaries():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # Run the app
 if __name__ == '__main__':
