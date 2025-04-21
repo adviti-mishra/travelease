@@ -21,7 +21,8 @@ CORS(app, resources={
        "origins": [
         "http://localhost:3000",
         "https://travelease-ow7tfdh80-adviti-mishras-projects.vercel.app",
-        "https://travelease-eneaamh4x-adviti-mishras-projects.vercel.app"],
+        "https://travelease-eneaamh4x-adviti-mishras-projects.vercel.app", 
+        "https://travelease-cwc15iuzi-adviti-mishras-projects.vercel.app"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
