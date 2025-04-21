@@ -20,7 +20,7 @@ CORS(app, resources={
     r"/*": {
        "origins": [
         "http://localhost:3000",
-        "https://travelease.vercel.app",],
+        "https://travelease-fawn.vercel.app/",],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
