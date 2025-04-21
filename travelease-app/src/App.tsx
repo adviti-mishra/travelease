@@ -121,6 +121,28 @@ function FirstPage() {
       const data = await response.json();
       console.log("Parsed response data:", data);
       setSummaryData(data.summary);
+      
+      // Save the summary to Supabase
+      try {
+        console.log("Saving summary to Supabase...");
+        const saveResponse = await fetch("https://travelease-ly1a.onrender.com/summaries", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content: data.summary }),
+        });
+        
+        if (!saveResponse.ok) {
+          const errorText = await saveResponse.text();
+          console.error(`Failed to save summary: ${saveResponse.status} - ${errorText}`);
+        } else {
+          console.log("Summary saved successfully to Supabase");
+        }
+      } catch (saveError) {
+        console.error("Error saving summary to Supabase:", saveError);
+      }
     } catch (error) {
       console.error("Error details:", error);
       setSummaryData({ error: `Failed to send link: ${(error as Error).message}` });
