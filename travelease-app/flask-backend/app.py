@@ -17,17 +17,12 @@ supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Set Flask to serve React's build directory (go up one level)
 app = Flask(__name__)
-CORS(app, resources={
-    r"/*": {
-       "origins": [
-        "http://localhost:3000",
-        "https://travelease-fawn.vercel.app",],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
-    }
-})
-#
+
+# Simple CORS configuration that applies to all routes
+CORS(app, 
+     origins=["http://localhost:3000", "https://travelease-fawn.vercel.app"],
+     supports_credentials=True)
+
 # Register the API Blueprint
 app.register_blueprint(api, url_prefix='/api')
 
